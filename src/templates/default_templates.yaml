@@ -1,0 +1,50 @@
+templates:
+  fabbrica_giocattoli_standard:
+    nome: "Fabbrica Giocattoli Standard"
+    descrizione: "Template standard per la gestione turni della Fabbrica del Polo Nord"
+    struttura: |
+      Sulle righe ci sono gli elfi e nelle colonne ci sono i reparti.
+      Colonna 'Cappello':
+      - 'Rosso' = Mastro Elfo (responsabile reparto)
+      - 'Verde' = Elfo Apprendista (supporto)
+      
+      Nelle celle:
+      - Nome reparto (es. 'TR', 'PE', 'CM') = elfo assegnato a quel reparto in quell'ora
+      - 'Jolly' = elfo disponibile per sostituzioni
+      - 'RM' = fuori a cercare materiali (non disponibile)
+      - 'Carb' = gestisce regali bimbi cattivi (non disponibile)
+      - 'ABS - XX' = elfo assente dal reparto XX
+      - 'SUB - XX' = elfo sostituisce nel reparto XX
+      - Cella vuota tra due celle assegnate = 'Pausa Cioccolata' (richiamabile) (le celle assegnate
+      non possono essere ' ', 'Jolly', 'RM', 'Carb' e 'ABS - XX')
+    
+    regole: |
+      REGOLA 'Assistente asseganto a stesso reparto':
+      Cappello Verde nello stesso reparto sostituisce Cappello Rosso
+      Se un elfo Cappello Rosso è assente e un Cappello Verde è già assegnato allo stesso
+      reparto in quell'ora, il Verde prende la responsabilità totale.
+      Esempio: Lampogio (Rosso) è assente nel reparto 'CM' alla 4^ ora ('ABS - CM'). Spruzzo
+      (Verde) è assegnato a 'CM' nella 4^ ora. Quindi Spruzzo sostituisce ('SUB - CM').
+      
+      REGOLA 'Ora Jolly': Gli elfi 'Jolly' sono i primi candidati a sostituire
+      Esempio: Se Scintillino è assente ('ABS - PE') alla 4^ ora e Brillastella ha 'Jolly'
+      nella 4^ ora, allora Brillastella sostituisce ('SUB - PE').
+      
+      REGOLA 'Ora Pausa Cioccolata': Gli elfi in 'Pausa Cioccolata' possono essere chiamati
+      Una 'Pausa Cioccolata' è un'ora vuota tra due ore assegnate (le ore assegnate
+      NON possono essere ' ', 'Jolly', 'RM', 'Carb' e 'ABS - XX').
+      Esempio Ok: Se Lampogio è assente ('ABS - CM') alla 3^ ora e Fulgor ha la 2^ ora
+      assegnata a 'RG' e la 4^ ora assegnata a 'LC' (quindi 3^ ora vuota), Fulgor può
+      sostituire ('SUB - CM').
+      Esempio Ko: Se Pignaferma è assente ('ABS - RG') alla 3^ ora e Rametto ha la 2^ ora
+      assegnata a 'RM' e la 4^ ora assegnata a 'PG' (quindi 3^ ora vuota MA l'ora adiacente è 'RM'),
+      Fulgor è indisponibile alla sostituzione.
+      
+      PRIORITÀ APPLICAZIONE REGOLE: Prima Regola 'Assistente asseganto a stesso reparto',
+      poi Regola 'Ora Jolly', infine Regola 'Ora Pausa Cioccolata'.
+
+  personalizzato:
+    nome: "Personalizzato"
+    descrizione: "Template vuoto per configurazioni personalizzate"
+    struttura: "Descrivi qui la struttura del tuo file..."
+    regole: "Definisci qui le regole di sostituzione..."

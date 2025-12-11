@@ -1,9 +1,12 @@
-# --- Python Core ---
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+venv/
+env/
+ENV/
 build/
 develop-eggs/
 dist/
@@ -19,54 +22,33 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+test/
 
-# --- Virtual Environments ---
-# Escludiamo le cartelle comuni per i venv
-venv/
-.venv/
-env/
-ENV/
+# Streamlit
+.streamlit/
 
-# --- Environment Variables & Secrets (CRITICO) ---
-# Mai committare le chiavi API
+# Dati sensibili
 .env
-.env.*
-!.env.example
+*.xlsx
+*.xls
+app/data/*
+!app/data/.gitkeep
 
-# --- Project Specific: Database & Storage ---
-# Ignoriamo lo storage locale di Qdrant come richiesto
-data/qdrant_storage/
-
-# Se vuoi ignorare tutti i file nella cartella data ma mantenere la struttura della cartella,
-# scommenta la riga sotto e crea un file .gitkeep vuoto dentro data/
-# data/*
-# !data/.gitkeep
-
-# --- Streamlit ---
-# Streamlit secrets non devono mai finire su Git
-.streamlit/secrets.toml
-# La config pubblica può essere committata, ma spesso la cartella cache no
-.streamlit/config.toml
-*.pyc
-
-# --- IDE & Editors ---
-# VS Code
+# IDE
 .vscode/
-# PyCharm
 .idea/
+*.swp
+*.swo
+*~
 
-# --- Windows OS Files ---
-# File di sistema inutili generati da Windows
+# OS
+.DS_Store
 Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msm
-*.msp
-*.lnk
 
-# --- Logs ---
+# Logs
 *.log
+logs/
+
+# Temp files
+*.tmp
+temp/

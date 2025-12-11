@@ -1,0 +1,13 @@
+datapizza-ai>=0.0.9
+openai>=1.0.0
+# Sandbox esecuzione codice
+# IMPORTANTE: Blocchiamo la versione alla 1.x per stabilità e compatibilità
+e2b-code-interpreter<2.0.0
+# Fix SSL per Windows (fondamentale per evitare l'errore CERTIFICATE_VERIFY_FAILED)
+pip-system-certs; sys_platform == 'win32'
+pandas>=2.0.0
+openpyxl>=3.0.0
+pyyaml>=6.0.1
+streamlit>=1.30.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
