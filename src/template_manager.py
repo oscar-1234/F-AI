@@ -6,6 +6,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any
 from pydantic import BaseModel, Field, ValidationError
+from src.config import TEMPLATES_FILE
 
 class Template(BaseModel):
     """Model to validate a single template"""
@@ -85,7 +86,7 @@ class TemplateManager:
         return list(self._templates.keys())
 
 # Global initialization
-TEMPLATES_FILE = Path(__file__).parent / "templates" / "default_templates.yaml"
+#TEMPLATES_FILE = Path(__file__).parent / "templates" / "default_templates.yaml"
 
 try:
     _manager = TemplateManager(TEMPLATES_FILE)

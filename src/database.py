@@ -10,8 +10,8 @@ from .models import ConfigSetup, SystemMetrics
 
 
 class SessionManager:
-    """Gestisce lo state della sessione Streamlit in modo type-safe"""
-    
+    """Gestisce lo stato della sessione Streamlit in modo type-safe"""
+#*.*   
     def __init__(self):
         """Inizializza session state se non esiste"""
         if "config" not in st.session_state:
@@ -22,7 +22,7 @@ class SessionManager:
         
         if "messages" not in st.session_state:
             st.session_state.messages = []
-    
+#*.*
     def is_configured(self) -> bool:
         """Verifica se il sistema è configurato"""
         return st.session_state.config is not None
@@ -103,7 +103,7 @@ class SessionManager:
         # Incrementa contatori
         metrics.totale_richieste += 1
         metrics.totale_sostituzioni += sostituzioni_count
-        metrics.costo_totale += cost
+#        metrics.costo_totale += cost #-#
         
         # Calcola media mobile tempo risposta
         n = metrics.totale_richieste

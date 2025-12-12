@@ -3,13 +3,17 @@ templates:
     nome: "Fabbrica Giocattoli Standard"
     descrizione: "Template standard per la gestione turni della Fabbrica del Polo Nord"
     struttura: |
-      Sulle righe ci sono gli elfi e nelle colonne ci sono i reparti.
-      Colonna 'Cappello':
-      - 'Rosso' = Mastro Elfo (responsabile reparto)
-      - 'Verde' = Elfo Apprendista (supporto)
-      
-      Nelle celle:
-      - Nome reparto (es. 'TR', 'PE', 'CM') = elfo assegnato a quel reparto in quell'ora
+      File Excel organizzato con una singola riga di intestazione:
+      - Colonna 'Nome Elfo': Identificativo univoco dell'elfo
+      - Colonna 'Cappello': Ruolo
+        - 'Rosso' = Mastro Elfo (responsabile reparto)
+        - 'Verde' = Elfo Apprendista (supporto)
+      - Colonne Turni: Formato 'GGG_O' (es: 'LUN_1', 'LUN_2'...'MAR_1'...'MAR_6')
+        - GGG: Giorno (LUN, MAR, MER, GIO, VEN, SAB, DOM)
+        - O: Numero ora del turno (1-6)
+
+      Valori nelle celle turni:
+      - Codice reparto (es. 'TR', 'PE', 'CM') = elfo assegnato a quel reparto in quell'ora
       - 'Jolly' = elfo disponibile per sostituzioni
       - 'RM' = fuori a cercare materiali (non disponibile)
       - 'Carb' = gestisce regali bimbi cattivi (non disponibile)
@@ -40,8 +44,14 @@ templates:
       assegnata a 'RM' e la 4^ ora assegnata a 'PG' (quindi 3^ ora vuota MA l'ora adiacente è 'RM'),
       Fulgor è indisponibile alla sostituzione.
       
-      PRIORITÀ APPLICAZIONE REGOLE: Prima Regola 'Assistente asseganto a stesso reparto',
-      poi Regola 'Ora Jolly', infine Regola 'Ora Pausa Cioccolata'.
+      **PRIORITÀ APPLICAZIONE REGOLE**: cerca soluzioni applicando le regole in questo ordine
+        1) Prima Regola 'Assistente asseganto a stesso reparto'
+        2) Regola 'Ora Jolly'
+        3) Regola 'Ora Pausa Cioccolata'.
+
+      hints_analisi:
+        - pattern_colonne: "Identifica le colonne turni cercando pattern come 'LUN_', 'MAR_' nell'header"
+        - validazione: "Verifica che il sostituto non sia a sua volta assente ('ABS') o già occupato assegnato ad altro reparto."
 
   personalizzato:
     nome: "Personalizzato"

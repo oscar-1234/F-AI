@@ -1,17 +1,17 @@
 """
-Project configuration
+Configurazione centrale del progetto
 """
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
+# Carica variabili d'ambiente
 load_dotenv()
 
 # ========================================
 # API KEYS
 # ========================================
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 E2B_API_KEY = os.getenv("E2B_API_KEY")
 
@@ -24,8 +24,8 @@ if not E2B_API_KEY:
 # LLM MODELS
 # ========================================
 
-CODE_GENERATION_MODEL = "gpt-4o"   # Reasoning to create Python code
-NARRATION_MODEL = "gpt-4o-mini"    # cheap model for storytelling
+REASONING_MODEL = "gpt-4o"
+BASE_MODEL = "gpt-4o-mini"
 
 # ========================================
 # STREAMLIT CONFIG
@@ -52,13 +52,16 @@ PAGE_CONFIG = {
 # PATHS
 # ========================================
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "app" / "data"
-TEMPLATES_DIR = PROJECT_ROOT / "src" / "data"
+FILE_DIR = PROJECT_ROOT / "src" / "data"
 
 # Create directories if none exist
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+FILE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Template Global initialization
+TEMPLATES_FILE = PROJECT_ROOT / "src" / "templates" / "default_templates.yaml"
 
 # ========================================
 # E2B CONFIG
