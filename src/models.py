@@ -25,6 +25,7 @@ class Sostituzione(BaseModel):
     cappello_assente: Optional[str] = None
     sostituto: str
     regola_applicata: str
+    ragionamento: str
     
     @field_validator('ora', mode='before')
     @classmethod
@@ -43,9 +44,27 @@ class Sostituzione(BaseModel):
                 "assente": "Scintillino",
                 "cappello_assente": "Rosso",
                 "sostituto": "Brillastella",
-                "regola_applicata": "Regola 'Ora Jolly'"
+                "regola_applicata": "Regola 'Ora Jolly'",
+                "ragionamento": "Ho scelto la regola 'Ora Jolly' perchè ..."
             }
         }
+
+class ConversationalContext(BaseModel):
+    """Context of the current conversation"""
+    ultima_richiesta: str
+    ultime_sostituzioni: List[Sostituzione] = []
+    codice_generato: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.now)
+    
+    def get_sostituzioni_summary(self) -> str:
+        """Returns a summary of the substitutions for the context"""
+        if not self.ultime_sostituzioni:
+            return "Nessuna sostituzione calcolata"
+        
+        summary = f"Calcolate {len(self.ultime_sostituzioni)} sostituzioni:\n"
+        for s in self.ultime_sostituzioni:
+            summary += f"- {s.assente} ({s.reparto}, {s.giorno} ora {s.ora}) → {s.sostituto} [{s.regola_applicata}]\n"
+        return summary
 
 class SystemMetrics(BaseModel):
     """System metrics"""

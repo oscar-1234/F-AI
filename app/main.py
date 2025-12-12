@@ -8,22 +8,26 @@ import sys
 import json
 import re
 from pathlib import Path
+from pydantic import TypeAdapter, ValidationError
 
 # Setup path per importare src
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
-from src.models import Sostituzione
-from pydantic import TypeAdapter, ValidationError
 from src.config import PAGE_CONFIG
 from src.template_manager import TEMPLATES
 from src.database import SessionManager
-from src.agents import create_code_generator_agent, create_narrator_agent
 from src.utils import save_uploaded_file
+from src.memory_manager import ConversationMemoryManager
+from src.agents.factory import create_multi_agent_system
+from src.models import Sostituzione
 
 # Configurazione pagina
 st.set_page_config(**PAGE_CONFIG)
+
+# Inizializza managers
 session = SessionManager()
+memory_manager = ConversationMemoryManager()
 
 # ========================================
 # STEP 1: WIZARD SETUP
@@ -36,11 +40,13 @@ if not session.is_configured():
     
     with st.form("setup_form"):
         uploaded_file = st.file_uploader("Carica orario (.xlsx)", type=['xlsx'])
+        
         struttura = st.text_area(
             "Struttura File",
             value=TEMPLATES[template_choice]["struttura"],
             height=150
         )
+        
         regole = st.text_area(
             "Regole Sostituzione",
             value=TEMPLATES[template_choice]["regole"],
@@ -66,7 +72,7 @@ if not session.is_configured():
 # STEP 2: CHAT INTERFACE
 # ========================================
 else:
-    st.title("🎄 Gestione Emergenze Polo Nord")
+    st.title("🎄 Gestione Emergenze fabbrica giocattoli Polo Nord")
     
     # ---------------------------------------------------------
     # SIDEBAR
@@ -75,8 +81,9 @@ else:
         st.success("✅ Sistema configurato")
         st.caption(f"📊 File: `{session.get('file_name')}`")
         
-        if st.button("⚙️ Modifica Configurazione", use_container_width=True):
+        if st.button("⚙️ Reset e modifica configurazione", use_container_width=True):
             session.reset()
+            memory_manager.clear_all()
             st.rerun()
         
         st.markdown("---")
@@ -87,12 +94,26 @@ else:
         with st.expander("📜 Regole Attive"):
             st.text(session.get("regole"))
         
+        # Mostra context conversazionale se presente
+        if memory_manager.has_substitutions():
+            with st.expander("💬 Context Conversazione"):
+                ctx_data = st.session_state.get(memory_manager.CONTEXT_KEY, {})
+                if ctx_data.get('last_calculation_time'):
+                    st.caption(f"⏰ {ctx_data['last_calculation_time'].strftime('%H:%M:%S')}")
+                st.info(f"📝 Ultima richiesta: {ctx_data.get('last_request', 'N/A')}")
+                st.success(f"✅ {len(memory_manager.get_last_substitutions())} sostituzioni in memoria")
+        
         st.markdown("---")
+        
         debug_mode = st.checkbox("🔍 Modalità Debug", value=False)
         
         if debug_mode:
             with st.expander("🧪 Session State"):
                 st.json(session.get_all())
+            
+            with st.expander("🧠 Memory Info"):
+                st.write(f"Conversazione: {memory_manager.get_conversation_length()} turni")
+                st.write(f"Sostituzioni: {len(memory_manager.get_last_substitutions())}")
     
     # ---------------------------------------------------------
     # Chat UI
@@ -100,142 +121,173 @@ else:
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
+    # Mostra messaggi precedenti
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-            if debug_mode and "metadata" in msg:
-                st.json(msg["metadata"])
+            
+            # Mostra JSON sostituzioni se presenti
+            if msg["role"] == "assistant" and "substitutions_data" in msg:
+                with st.expander("📊 Dettagli Tecnici Sostituzioni"):
+                    st.dataframe(msg["substitutions_data"])
     
+    # Input utente
     if prompt := st.chat_input("Es: Oggi Scintillino è malato..."):
+        # Aggiungi messaggio utente
         st.session_state.messages.append({"role": "user", "content": prompt})
         
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Context per l'agente
-        full_context = f"""
-HAI UN NUOVO COMPITO:
+        with st.chat_message("assistant"):
+            with st.spinner("🎅 Babbo Natale sta pensando..."):
+                try:
+                    # =========================================
+                    # CREA ORCHESTRATOR CON MEMORY
+                    # =========================================
+                    from src.config import OPENAI_API_KEY
+                    
+                    memory = memory_manager.get_memory()
+                    
+                    orchestrator = create_multi_agent_system(
+                        api_key=OPENAI_API_KEY,
+                        memory=memory
+                    )
+                    
+                    # =========================================
+                    # COSTRUISCI PROMPT CON CONTEXT
+                    # =========================================
+                    full_prompt = f"""
+RICHIESTA UTENTE:
 {prompt}
 
-REGOLE DI SOSTITUZIONE ATTIVE:
+STRUTTURA DATI:
+{session.get('struttura')}
+
+REGOLE ATTIVE:
 {session.get('regole')}
 
-ISTRUZIONI PER L'AGENTE:
-1. Scrivi la funzione `calcola_sostituzioni(df)` in Python.
-2. Usa il tool `execute_code_in_sandbox`.
-3. Non preoccuparti del caricamento file: il tool caricherà automaticamente il file corretto nella variabile `df`.
-4. Se ottieni un risultato valido (JSON con le sostituzioni), RESTITUISCILO IMMEDIATAMENTE come risposta finale.
-5. NON scrivere spiegazioni tipo "Ecco fatto" o "Ho corretto l'errore".
-6. La tua risposta finale DEVE essere SOLTANTO il JSON/Lista dei dati.
+CONTEXT SOSTITUZIONI PRECEDENTI:
 """
-        
-        with st.chat_message("assistant"):
-            with st.spinner("Babbo Natale sta gestendo l'emergenza..."):
-                try:
-                    code_agent = create_code_generator_agent()
-                    narrator_agent = create_narrator_agent()
                     
-                    # Esecuzione Agente
-                    raw_response = code_agent.run(full_context)
+                    # Aggiungi context sostituzioni se presenti
+                    if memory_manager.has_substitutions():
+                        full_prompt += f"""
+{memory_manager.get_substitutions_summary()}
+"""
+                    if debug_mode:
+                        st.info("📨 Prompt inviato all'orchestrator")
+                        with st.expander("Vedi prompt completo"):
+                            st.text(full_prompt)
+                    
+                    # =========================================
+                    # AGGIUNGI USER MESSAGE A MEMORY
+                    # =========================================
+                    memory_manager.add_user_message(prompt)
+                    
+                    # =========================================
+                    # CHIAMA ORCHESTRATOR (UNICO ENTRY POINT)
+                    # =========================================
+                    response = orchestrator.run(full_prompt)
                     
                     if debug_mode:
-                        st.write("🔍 Raw response:", raw_response)
+                        st.write("🔍 Raw response:")
+                        st.write(response)
                     
-                    # ====================================================
-                    # PARSING DATAPIZZA (TextBlock → JSON → Pydantic)
-                    # ====================================================
-                    final_data = []
+                    # =========================================
+                    # ESTRAI RISPOSTA
+                    # =========================================
+                    response_text = str(response)
                     
-                    # 1. Estrai content da StepResult
-                    if hasattr(raw_response, 'content') and isinstance(raw_response.content, list):
-                        if len(raw_response.content) > 0:
-                            first_block = raw_response.content[0]
+                    # Estrai content secondo la struttura datapizza-ai
+                    if hasattr(response, 'content'):
+                        if isinstance(response.content, list) and len(response.content) > 0:
+                            first_block = response.content[0]
                             if hasattr(first_block, 'content'):
-                                content_to_parse = first_block.content
+                                response_text = first_block.content
                             elif hasattr(first_block, 'text'):
-                                content_to_parse = first_block.text
-                            else:
-                                content_to_parse = str(first_block)
-                        else:
-                            content_to_parse = str(raw_response)
-                    else:
-                        content_to_parse = str(raw_response)
+                                response_text = first_block.text
+                    elif hasattr(response, 'text'):
+                        response_text = response.text
                     
-                    if debug_mode:
-                        st.write(f"📝 Contenuto estratto: {str(content_to_parse)[:300]}...")
+                    # =========================================
+                    # MOSTRA RISPOSTA
+                    # =========================================
+                    st.markdown(response_text)
                     
-                    # 2. Pulizia Markdown
-                    if isinstance(content_to_parse, str):
-                        content_to_parse = content_to_parse.replace('```json', '').replace('```', '').strip()
+                    # =========================================
+                    # PARSING JSON SOSTITUZIONI (se presenti)
+                    # =========================================
+                    substitutions_data = []
                     
-                    # 3. Validazione Pydantic
-                    try:
-                        adapter = TypeAdapter(list[Sostituzione])
-                        if isinstance(content_to_parse, str):
-                            final_data_objs = adapter.validate_json(content_to_parse)
-                        else:
-                            final_data_objs = adapter.validate_python(content_to_parse)
-                        final_data = [obj.model_dump() for obj in final_data_objs]
+                    # Cerca JSON nel formato [...]
+                    print("--- DEBUG RESPONSE ---") #-#
+                    print(response_text) #-#
+                    json_match = re.search(r'\[.*?\]', response_text, re.DOTALL)
+                    if json_match:
+                        print("--- JSON TROVATO ---") #-#
+                        print(json_match.group()) #-#
+                        try:
+                            json_str = json_match.group()
+                            # Valida con Pydantic
+                            adapter = TypeAdapter(list[Sostituzione])
+                            validated_subs = adapter.validate_json(json_str)
+                            print(f"--- VALIDAZIONE OK: {len(validated_subs)} items ---") #-#
+                            substitutions_data = [s.model_dump() for s in validated_subs]
+                            
+                            if substitutions_data:
+                                try: #-#
+                                    # Salva in memory manager
+                                    memory_manager.save_calculation_context(
+                                        request=prompt,
+                                        substitutions=validated_subs
+                                    )
+                                    if debug_mode:
+                                        st.success(f"💾 Salvate {len(substitutions_data)} sostituzioni in memoria")
+                                except Exception as e: #-#
+                                    print(f"--- ERRORE Salvataggio: {e} ---") #-#
+
+                                # Mostra dettagli tecnici
+                                with st.expander("📊 Dettagli Tecnici Sostituzioni"):
+                                    st.dataframe(substitutions_data)
+                                
+                                # Metrics
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.metric("Sostituzioni", len(substitutions_data))
+                                with col2:
+                                    st.metric("Stato", "✅ Completato")
+                                with col3:
+                                    st.metric("Template", session.get("template", "N/A"))
                         
-                        if debug_mode:
-                            st.success(f"✅ {len(final_data)} sostituzioni validate")
+                        except (json.JSONDecodeError, ValidationError) as e:
+                            if debug_mode:
+                                st.warning(f"⚠️ JSON trovato ma non valido: {e}")
                     
-                    except Exception as e:
-                        st.error(f"⚠️ Errore validazione: {type(e).__name__}")
-                        if debug_mode:
-                            st.error(str(e))
-                        final_data = []
+                    # =========================================
+                    # AGGIUNGI ASSISTANT MESSAGE A MEMORY
+                    # =========================================
+                    memory_manager.add_assistant_message(response_text)
                     
-                    # ====================================================
-                    # FINE PARSING
-                    # ====================================================
+                    # Salva in chat history
+                    message_data = {
+                        "role": "assistant",
+                        "content": response_text
+                    }
+                    if substitutions_data:
+                        message_data["substitutions_data"] = substitutions_data
                     
-                    if not final_data:
-                        msg = "⚠️ Non sono riuscito a calcolare sostituzioni valide."
-                        if debug_mode:
-                            msg += f"\n\nContenuto grezzo:\n{content_to_parse}"
-                        st.error(msg)
-                    else:
-                        # Narrazione
-                        story_prompt = f"""
-Crea una breve storia natalizia (max 150 parole) basata su queste sostituzioni:
-{json.dumps(final_data, ensure_ascii=False)}
-"""
-                        story_response = narrator_agent.run(story_prompt)
-                        
-                        # Estrai testo dalla risposta del narrator
-                        if hasattr(story_response, 'content') and isinstance(story_response.content, list):
-                            if len(story_response.content) > 0 and hasattr(story_response.content, 'content'):
-                                story = story_response.content.content
-                            else:
-                                story = str(story_response)
-                        elif hasattr(story_response, 'text'):
-                            story = story_response.text
-                        else:
-                            story = str(story_response)
-                        
-                        st.markdown(story)
-                        
-                        with st.expander("📊 Dettagli Tecnici Sostituzioni"):
-                            st.dataframe(final_data)
-                        
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": story,
-                            "metadata": final_data
-                        })
-                        
-                        # Metrics
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.metric("Sostituzioni", len(final_data))
-                        with col2:
-                            st.metric("Stato", "✅ Completato")
-                        with col3:
-                            st.metric("Template", session.get("template", "N/A"))
-                
+                    st.session_state.messages.append(message_data)
+                    
                 except Exception as e:
-                    st.error(f"❌ Errore sistema: {str(e)}")
+                    error_msg = f"❌ Errore sistema: {str(e)}"
+                    st.error(error_msg)
+                    
                     if debug_mode:
                         import traceback
                         st.code(traceback.format_exc())
+                    
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": error_msg
+                    })

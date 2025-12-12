@@ -1,17 +1,17 @@
 """
-Project configuration
+Configurazione centrale del progetto
 """
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
+# Carica variabili d'ambiente
 load_dotenv()
 
 # ========================================
 # API KEYS
 # ========================================
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 E2B_API_KEY = os.getenv("E2B_API_KEY")
 
@@ -24,8 +24,8 @@ if not E2B_API_KEY:
 # LLM MODELS
 # ========================================
 
-CODE_GENERATION_MODEL = "gpt-4o"   # Reasoning to create Python code
-NARRATION_MODEL = "gpt-4o-mini"    # cheap model for storytelling
+REASONING_MODEL = "gpt-4o"
+BASE_MODEL = "gpt-4o-mini"
 
 # ========================================
 # STREAMLIT CONFIG

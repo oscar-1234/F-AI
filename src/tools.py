@@ -9,7 +9,8 @@ import os
 import traceback
 from pathlib import Path
 
-from .config import E2B_API_KEY
+# Import assoluto invece di relativo
+from src.config import E2B_API_KEY
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "app" / "data"
@@ -25,30 +26,27 @@ def execute_code_in_sandbox(
     try:
         if not DATA_DIR.exists():
             return json.dumps({"success": False, "error": f"Directory dati non trovata: {DATA_DIR}"})
-            
+        
         excel_files = sorted(DATA_DIR.glob("*.xlsx"), key=lambda p: p.stat().st_mtime, reverse=True)
         if not excel_files:
             return json.dumps({"success": False, "error": "Nessun file Excel trovato in app/data."})
-            
+        
         real_file_path = excel_files[0]
         remote_filename = "orario_elfi.xlsx"
-
+        
         os.environ["E2B_API_KEY"] = E2B_API_KEY
         
         with Sandbox(api_key=E2B_API_KEY) as sandbox:
             with open(real_file_path, 'rb') as f:
                 sandbox.files.write(remote_filename, f.read())
             
-            # --- FIX CRITICO: Wrapper con struttura sicura ---
-            # Definiamo il codice utente a livello globale, poi eseguiamo la logica in un try/except separato
+            # Wrapper con struttura sicura
             codice_wrapper = f"""
 import pandas as pd
 import json
 import traceback
 
 # 1. CODICE UTENTE (Definizioni funzioni, import, costanti)
-# Viene eseguito nello scope globale. Se fallisce qui (es. SyntaxError), 
-# l'intera cella fallisce e catturiamo l'errore dalla sandbox.
 {codice_python}
 
 # 2. LOGICA DI ESECUZIONE CONTROLLATA
@@ -59,14 +57,14 @@ try:
     
     # Normalizzazione
     if len(df.columns) == 14:
-        df.columns = ['Nome Elfo', 'Cappello', 
+        df.columns = ['Nome Elfo', 'Cappello',
                       'LUN_1', 'LUN_2', 'LUN_3', 'LUN_4', 'LUN_5', 'LUN_6',
                       'MAR_1', 'MAR_2', 'MAR_3', 'MAR_4', 'MAR_5', 'MAR_6']
-
+    
     # Verifica esistenza funzione
     if 'calcola_sostituzioni' not in locals():
         raise NameError("La funzione 'calcola_sostituzioni(df)' non è stata definita.")
-
+    
     # Esecuzione
     risultati = calcola_sostituzioni(df)
     
@@ -75,7 +73,7 @@ try:
 
 except Exception as e:
     print(json.dumps({{
-        "success": False, 
+        "success": False,
         "error": str(e),
         "traceback": traceback.format_exc()
     }}, ensure_ascii=False))
@@ -96,9 +94,9 @@ except Exception as e:
             
             if not output_text:
                 return json.dumps({"success": False, "error": "Nessun output ricevuto dalla sandbox."})
-                
+            
             return output_text
-
+    
     except Exception as e:
         return json.dumps({
             "success": False,
