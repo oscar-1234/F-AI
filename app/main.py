@@ -30,7 +30,7 @@ session = SessionManager()
 memory_manager = ConversationMemoryManager()
 
 # ========================================
-# STEP 1: WIZARD SETUP
+# STEP 1: SETUP
 # ========================================
 if not session.is_configured():
     st.title("🎄 Benvenuto nella Fabbrica degli Elfi!")

@@ -55,12 +55,6 @@ try:
     remote_filename = '{remote_filename}'
     df = pd.read_excel(remote_filename, header=0)
     
-    # Normalizzazione
-    if len(df.columns) == 14:
-        df.columns = ['Nome Elfo', 'Cappello',
-                      'LUN_1', 'LUN_2', 'LUN_3', 'LUN_4', 'LUN_5', 'LUN_6',
-                      'MAR_1', 'MAR_2', 'MAR_3', 'MAR_4', 'MAR_5', 'MAR_6']
-    
     # Verifica esistenza funzione
     if 'calcola_sostituzioni' not in locals():
         raise NameError("La funzione 'calcola_sostituzioni(df)' non è stata definita.")

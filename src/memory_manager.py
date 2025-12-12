@@ -1,6 +1,4 @@
 """
-src/memory_manager.py
-
 Gestione memoria conversazionale per sistema multi-agente.
 Integra datapizza.memory.Memory con Streamlit session state.
 """
@@ -9,7 +7,7 @@ import streamlit as st
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from datapizza.memory import Memory
-from datapizza.type import ROLE, TextBlock  # ← CORREZIONE: datapizza.type non datapizza.models
+from datapizza.type import ROLE, TextBlock
 from src.models import Sostituzione
 import json
 
@@ -23,11 +21,11 @@ class ConversationMemoryManager:
     # Chiavi per session state
     MEMORY_KEY = "datapizza_memory"
     CONTEXT_KEY = "app_context"
-    
+#*.*    
     def __init__(self):
         """Inizializza o recupera Memory da session state"""
         self._init_session_state()
-    
+#*.*    
     def _init_session_state(self):
         """Inizializza le chiavi necessarie in session state"""
         if self.MEMORY_KEY not in st.session_state:

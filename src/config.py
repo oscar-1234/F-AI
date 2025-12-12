@@ -52,13 +52,16 @@ PAGE_CONFIG = {
 # PATHS
 # ========================================
 
-PROJECT_ROOT = Path(__file__).parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "app" / "data"
-TEMPLATES_DIR = PROJECT_ROOT / "src" / "data"
+FILE_DIR = PROJECT_ROOT / "src" / "data"
 
 # Create directories if none exist
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+FILE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Template Global initialization
+TEMPLATES_FILE = PROJECT_ROOT / "src" / "templates" / "default_templates.yaml"
 
 # ========================================
 # E2B CONFIG

@@ -1,0 +1,4 @@
+from .prompts_orchestrator import SYSTEM_PROMPT as ORCHESTRATOR_SYSTEM_PROMPT
+from .prompts_code_generator import SYSTEM_PROMPT as CODE_GENERATOR_SYSTEM_PROMPT
+from .prompts_narrator import SYSTEM_PROMPT as NARRATOR_SYSTEM_PROMPT
+from .prompts_explainer import SYSTEM_PROMPT as EXPLAINER_SYSTEM_PROMPT

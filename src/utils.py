@@ -2,12 +2,8 @@
 Funzioni di utilità generiche
 """
 
-import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, Optional
-import hashlib
 from datetime import datetime
-
 
 def save_uploaded_file(uploaded_file, target_dir: str) -> Path:
     """
