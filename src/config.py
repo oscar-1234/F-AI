@@ -48,6 +48,11 @@ PAGE_CONFIG = {
     }
 }
 
+ICONS = {
+    "assistant": "🎅",  # Babbo Natale
+    "user": "🧝"       # L'utente (un Elfo?) oppure "👤"
+}
+
 # ========================================
 # PATHS
 # ========================================

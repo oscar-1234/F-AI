@@ -16,7 +16,7 @@ from streamlit.runtime.scriptrunner.script_runner import StopException
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
-from src.config import PAGE_CONFIG, DATA_DIR
+from src.config import PAGE_CONFIG, DATA_DIR, ICONS
 from src.template_manager import TEMPLATES
 from src.database import SessionManager
 from src.utils import save_uploaded_file
@@ -35,7 +35,7 @@ memory_manager = ConversationMemoryManager()
 # STEP 1: SETUP PANEL
 # ========================================
 if not session.is_configured():
-    st.title("🎄 Benvenuto nella Fabbrica degli Elfi!")
+    st.title("🎄 Benvenuto nella Fabbrica degli Elfi! 🧝")
     st.markdown("### 📋 Configura il sistema")
     
     template_choice = st.selectbox("Template", list(TEMPLATES.keys()))
@@ -74,7 +74,7 @@ if not session.is_configured():
 # STEP 2: CHAT INTERFACE
 # ========================================
 else:
-    st.title("🎄 Gestione Emergenze fabbrica giocattoli Polo Nord")
+    st.title("🎄 Gestione Emergenze fabbrica giocattoli Polo Nord 🧝")
     
     # ---------------------------------------------------------
     # SIDEBAR
@@ -120,12 +120,20 @@ else:
     # ---------------------------------------------------------
     # Chat UI
     # ---------------------------------------------------------
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    if st.session_state.messages == []:
+        # Salva in chat history
+        message_data = {
+            "role": "assistant",
+            "content": "🎄Ho! Ho! Ho! Sono Babbo Natale! Benvenuto nella mia fabbrica! Qui tra un regalo 🎁 e una pizza 🍕 c'è sempre un po' di trambusto. Dimmi pure, quale intoppo sta preoccupando i miei elfi oggi?"
+        }
+        st.session_state.messages.append(message_data)
     
     # Mostra messaggi precedenti
     for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
+        # Seleziona l'icona in base al ruolo del messaggio
+        avatar_icon = ICONS.get(msg["role"]) 
+        with st.chat_message(msg["role"], avatar=avatar_icon):
+
             st.markdown(msg["content"])
             
             # Mostra JSON sostituzioni se presenti
@@ -134,15 +142,15 @@ else:
                     st.dataframe(msg["substitutions_data"])
     
     # Input utente
-    if prompt := st.chat_input("Es: Martedì Scintillino è malato..."):
+    if prompt := st.chat_input("Es: Ciao, martedì Scintillino è malato..."):
         # Aggiungi messaggio utente
         st.session_state.messages.append({"role": "user", "content": prompt})
         
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar=ICONS["user"]):
             st.markdown(prompt)
         
-        with st.chat_message("assistant"):
-            with st.spinner("🎅 Babbo Natale sta pensando..."):
+        with st.chat_message("assistant", avatar=ICONS["assistant"]):
+            with st.spinner("Babbo Natale sta pensando..."):
                 try:
                     # =========================================
                     # CREA ORCHESTRATOR CON MEMORY
