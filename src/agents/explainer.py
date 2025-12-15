@@ -24,7 +24,7 @@ def create_explainer_agent(api_key: str, model: str = "gpt-4o") -> Agent:
         client=client,
         tools=[],  # Nessun tool, pure reasoning
         system_prompt=EXPLAINER_SYSTEM_PROMPT,
-        max_steps=5,
+        max_steps=2,
         terminate_on_text=True
     )
     

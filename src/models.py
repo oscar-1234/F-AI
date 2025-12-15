@@ -6,6 +6,14 @@ from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
+
+class Template(BaseModel):
+    """Model to validate a single template"""
+    nome: str
+    descrizione: str = ""
+    struttura: str = Field(..., min_length=10)
+    regole: str = Field(..., min_length=10)
+
 class ConfigSetup(BaseModel):
     """Initial system setup"""
     file_path: str
@@ -14,8 +22,7 @@ class ConfigSetup(BaseModel):
     regole: str
     template: str
     created_at: datetime = Field(default_factory=datetime.now)
-
-
+    
 class Sostituzione(BaseModel):
     """Single calculated replacement"""
     giorno: str
@@ -48,28 +55,3 @@ class Sostituzione(BaseModel):
                 "ragionamento": "Ho scelto la regola 'Ora Jolly' perchè ..."
             }
         }
-
-class ConversationalContext(BaseModel):
-    """Context of the current conversation"""
-    ultima_richiesta: str
-    ultime_sostituzioni: List[Sostituzione] = []
-    codice_generato: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.now)
-    
-    def get_sostituzioni_summary(self) -> str:
-        """Returns a summary of the substitutions for the context"""
-        if not self.ultime_sostituzioni:
-            return "Nessuna sostituzione calcolata"
-        
-        summary = f"Calcolate {len(self.ultime_sostituzioni)} sostituzioni:\n"
-        for s in self.ultime_sostituzioni:
-            summary += f"- {s.assente} ({s.reparto}, {s.giorno} ora {s.ora}) → {s.sostituto} [{s.regola_applicata}]\n"
-        return summary
-#*.*
-class SystemMetrics(BaseModel):
-    """System metrics"""
-    totale_richieste: int = 0
-    totale_sostituzioni: int = 0
-    tempo_medio_risposta: float = 0.0
-#    costo_totale: float = 0.0 #-#
-    ultimo_aggiornamento: datetime = Field(default_factory=datetime.now)

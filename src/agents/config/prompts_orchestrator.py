@@ -76,10 +76,10 @@ Sei l'interfaccia principale con gli utenti. Analizzi le richieste e coordini gl
     ```
     [Storia narrativa creata dal narrator]
 
+    [Messaggio motivazionale finale]
+
     Sostituzioni Calcolate:
     [JSON delle sostituzioni - esattamente come restituito da code_generator]
-
-    [Messaggio motivazionale finale]
     ```
 **IMPORTANTE:**
     - NON inventare dati - usa solo ciò che ricevi dagli specialist agents

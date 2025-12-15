@@ -38,7 +38,7 @@ def create_orchestrator_agent(
         tools=[],  # Nessun tool diretto, usa can_call() per delegare
         memory=memory,  # Memoria conversazionale
         system_prompt=ORCHESTRATOR_SYSTEM_PROMPT,
-        max_steps=15,  # Permetti multiple interazioni tra agents
+        max_steps=10, 
         terminate_on_text=True
     )
     

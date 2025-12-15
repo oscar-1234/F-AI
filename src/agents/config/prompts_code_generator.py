@@ -67,7 +67,7 @@ Riceverai nel prompt utente due sezioni:
     Per OGNI sostituzione, il campo "reasoning" deve contenere una breve spiegazione (1-2 frasi) che giustifichi la scelta, ad esempio:
         - "Brillastella aveva Jolly nell'ora 4, quindi era disponibile senza conflitti"
         - "Fulgor è assistente nel reparto PE, applicata regola prioritaria"
-        - "Choco-Effo era in pausa cioccolata, nessun altro disponibile con priorità superiore"
+        - "Choco-Effo era in pausa pizza, nessun altro disponibile con priorità superiore"
 
 **VINCOLO FORMATO OUTPUT (CRITICO):**
     Il tuo output finale DEVE essere ESCLUSIVAMENTE un JSON valido:

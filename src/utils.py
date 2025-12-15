@@ -5,7 +5,7 @@ Funzioni di utilità generiche
 from pathlib import Path
 from datetime import datetime
 
-def save_uploaded_file(uploaded_file, target_dir: str) -> Path:
+def save_uploaded_file(uploaded_file, target_dir: Path) -> Path:
     """
     Salva un file caricato da Streamlit sul filesystem
     

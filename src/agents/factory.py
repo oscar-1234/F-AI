@@ -14,6 +14,7 @@ from .orchestrator import create_orchestrator_agent
 # Setup path per importare src
 from pathlib import Path
 import sys
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 from src.config import REASONING_MODEL, BASE_MODEL
@@ -31,29 +32,14 @@ def create_multi_agent_system(
     
     Args:
         api_key: OpenAI API key
-        code_model: Modello per code generator (default: gpt-4o)
-        explainer_model: Modello per explainer (default: gpt-4o)
-        narrator_model: Modello per narrator (default: gpt-4o-mini economico)
-        orchestrator_model: Modello per orchestrator (default: gpt-4o)
+        code_model: Modello per code generator
+        explainer_model: Modello per explainer
+        narrator_model: Modello per narrator
+        orchestrator_model: Modello per orchestrator
         memory: Memoria conversazionale condivisa (opzionale)
     
     Returns:
         Agent orchestratore pronto per ricevere richieste utente
-    
-    Example:
-        ```
-        from datapizza.memory import Memory
-        from src.agents.factory import create_multi_agent_system
-        
-        memory = Memory()
-        orchestrator = create_multi_agent_system(
-            api_key="your-key",
-            memory=memory
-        )
-        
-        response = orchestrator.run("Gestisci le assenze di martedì")
-        print(response.text)
-        ```
     """
     # Crea gli specialist agents
     code_agent = create_code_generator_agent(

@@ -9,12 +9,14 @@ import json
 import re
 from pathlib import Path
 from pydantic import TypeAdapter, ValidationError
+from streamlit.runtime.scriptrunner import RerunException
+from streamlit.runtime.scriptrunner.script_runner import StopException
 
 # Setup path per importare src
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 
-from src.config import PAGE_CONFIG
+from src.config import PAGE_CONFIG, DATA_DIR
 from src.template_manager import TEMPLATES
 from src.database import SessionManager
 from src.utils import save_uploaded_file
@@ -30,7 +32,7 @@ session = SessionManager()
 memory_manager = ConversationMemoryManager()
 
 # ========================================
-# STEP 1: SETUP
+# STEP 1: SETUP PANEL
 # ========================================
 if not session.is_configured():
     st.title("🎄 Benvenuto nella Fabbrica degli Elfi!")
@@ -57,7 +59,7 @@ if not session.is_configured():
             if not uploaded_file:
                 st.error("⚠️ Manca il file Excel!")
             else:
-                file_path = save_uploaded_file(uploaded_file, "app/data")
+                file_path = save_uploaded_file(uploaded_file, DATA_DIR)
                 session.setup({
                     "file_path": str(file_path),
                     "file_name": uploaded_file.name,
@@ -101,7 +103,7 @@ else:
                 if ctx_data.get('last_calculation_time'):
                     st.caption(f"⏰ {ctx_data['last_calculation_time'].strftime('%H:%M:%S')}")
                 st.info(f"📝 Ultima richiesta: {ctx_data.get('last_request', 'N/A')}")
-                st.success(f"✅ {len(memory_manager.get_last_substitutions())} sostituzioni in memoria")
+                st.success(f"✅ {len(memory_manager.get_all_substitutions())} sostituzioni in memoria")
         
         st.markdown("---")
         
@@ -113,7 +115,7 @@ else:
             
             with st.expander("🧠 Memory Info"):
                 st.write(f"Conversazione: {memory_manager.get_conversation_length()} turni")
-                st.write(f"Sostituzioni: {len(memory_manager.get_last_substitutions())}")
+                st.write(f"Sostituzioni: {len(memory_manager.get_all_substitutions())}")
     
     # ---------------------------------------------------------
     # Chat UI
@@ -132,7 +134,7 @@ else:
                     st.dataframe(msg["substitutions_data"])
     
     # Input utente
-    if prompt := st.chat_input("Es: Oggi Scintillino è malato..."):
+    if prompt := st.chat_input("Es: Martedì Scintillino è malato..."):
         # Aggiungi messaggio utente
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -169,7 +171,6 @@ REGOLE ATTIVE:
 
 CONTEXT SOSTITUZIONI PRECEDENTI:
 """
-                    
                     # Aggiungi context sostituzioni se presenti
                     if memory_manager.has_substitutions():
                         full_prompt += f"""
@@ -186,7 +187,7 @@ CONTEXT SOSTITUZIONI PRECEDENTI:
                     memory_manager.add_user_message(prompt)
                     
                     # =========================================
-                    # CHIAMA ORCHESTRATOR (UNICO ENTRY POINT)
+                    # CHIAMA ORCHESTRATOR
                     # =========================================
                     response = orchestrator.run(full_prompt)
                     
@@ -197,19 +198,25 @@ CONTEXT SOSTITUZIONI PRECEDENTI:
                     # =========================================
                     # ESTRAI RISPOSTA
                     # =========================================
-                    response_text = str(response)
+                    #response_text = str(response)
+                    raw_text = response.text
+                    response_text = raw_text
                     
-                    # Estrai content secondo la struttura datapizza-ai
-                    if hasattr(response, 'content'):
-                        if isinstance(response.content, list) and len(response.content) > 0:
-                            first_block = response.content[0]
-                            if hasattr(first_block, 'content'):
-                                response_text = first_block.content
-                            elif hasattr(first_block, 'text'):
-                                response_text = first_block.text
-                    elif hasattr(response, 'text'):
-                        response_text = response.text
-                    
+                    # Cerca JSON
+                    json_match = re.search(r'\[.*?\]', raw_text, re.DOTALL)
+
+                    # Pulisci il testo per l'utente (Rimuovi il JSON)
+                    #if json_match:
+                        # Sostituisci il blocco JSON trovato con una stringa vuota
+                    #    clean_text = raw_text.replace(json_match.group(), "").strip()
+                        
+                        # Opzionale: Rimuovi eventuali frasi di accompagnamento tipo "Ecco il JSON:"
+                        # clean_text = re.sub(r'Ecco i dati tecnici:?', '', clean_text, flags=re.IGNORECASE).strip()
+                        
+                    #    response_out = clean_text
+                    #else:
+                    #    response_out = raw_text
+
                     # =========================================
                     # MOSTRA RISPOSTA
                     # =========================================
@@ -221,22 +228,22 @@ CONTEXT SOSTITUZIONI PRECEDENTI:
                     substitutions_data = []
                     
                     # Cerca JSON nel formato [...]
-                    print("--- DEBUG RESPONSE ---") #-#
-                    print(response_text) #-#
-                    json_match = re.search(r'\[.*?\]', response_text, re.DOTALL)
+                    #json_match = re.search(r'\[.*?\]', response_text, re.DOTALL)
                     if json_match:
-                        print("--- JSON TROVATO ---") #-#
-                        print(json_match.group()) #-#
+                        if debug_mode:
+                            print("--- JSON TROVATO ---")
+                            print(json_match.group())
                         try:
                             json_str = json_match.group()
                             # Valida con Pydantic
                             adapter = TypeAdapter(list[Sostituzione])
                             validated_subs = adapter.validate_json(json_str)
-                            print(f"--- VALIDAZIONE OK: {len(validated_subs)} items ---") #-#
+                            if debug_mode:
+                                print(f"--- VALIDAZIONE OK: {len(validated_subs)} items ---")
                             substitutions_data = [s.model_dump() for s in validated_subs]
                             
                             if substitutions_data:
-                                try: #-#
+                                try:
                                     # Salva in memory manager
                                     memory_manager.save_calculation_context(
                                         request=prompt,
@@ -244,7 +251,7 @@ CONTEXT SOSTITUZIONI PRECEDENTI:
                                     )
                                     if debug_mode:
                                         st.success(f"💾 Salvate {len(substitutions_data)} sostituzioni in memoria")
-                                except Exception as e: #-#
+                                except Exception as e:
                                     print(f"--- ERRORE Salvataggio: {e} ---") #-#
 
                                 # Mostra dettagli tecnici
@@ -279,6 +286,11 @@ CONTEXT SOSTITUZIONI PRECEDENTI:
                     
                     st.session_state.messages.append(message_data)
                     
+                    st.rerun()
+
+                except (RerunException, StopException):
+                    raise
+
                 except Exception as e:
                     error_msg = f"❌ Errore sistema: {str(e)}"
                     st.error(error_msg)

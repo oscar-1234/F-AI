@@ -24,7 +24,7 @@ if not E2B_API_KEY:
 # LLM MODELS
 # ========================================
 
-REASONING_MODEL = "gpt-4o"
+REASONING_MODEL = "gpt-4o" 
 BASE_MODEL = "gpt-4o-mini"
 
 # ========================================

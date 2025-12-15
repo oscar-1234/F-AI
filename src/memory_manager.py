@@ -21,11 +21,11 @@ class ConversationMemoryManager:
     # Chiavi per session state
     MEMORY_KEY = "datapizza_memory"
     CONTEXT_KEY = "app_context"
-#*.*    
+    
     def __init__(self):
         """Inizializza o recupera Memory da session state"""
         self._init_session_state()
-#*.*    
+    
     def _init_session_state(self):
         """Inizializza le chiavi necessarie in session state"""
         if self.MEMORY_KEY not in st.session_state:
@@ -35,7 +35,7 @@ class ConversationMemoryManager:
         if self.CONTEXT_KEY not in st.session_state:
             # Context applicativo (non parte della memory LLM)
             st.session_state[self.CONTEXT_KEY] = {
-                "last_substitutions": [],
+                "all_substitutions": [],
                 "last_request": "",
                 "last_calculation_time": None
             }
@@ -70,7 +70,7 @@ class ConversationMemoryManager:
         memory = self.get_memory()
         text_block = TextBlock(content=content)
         memory.add_turn(text_block, role=ROLE.ASSISTANT)
-    
+
     def save_calculation_context(
         self,
         request: str,
@@ -85,30 +85,30 @@ class ConversationMemoryManager:
             substitutions: Lista di sostituzioni calcolate (Pydantic models)
         """
         # Recupera sostituzioni esistenti
-        current_subs = st.session_state[self.CONTEXT_KEY].get("last_substitutions", [])
+        current_subs = st.session_state[self.CONTEXT_KEY].get("all_substitutions", [])
         
         # Prepara le nuove
         new_subs = [s.model_dump() for s in substitutions]
         
         # Unisci le liste
-        # (Opzionale: potresti voler rimuovere duplicati, ma per ora append è più sicuro)
+        # (Opzionale: potrei rimuovere duplicati, ma per ora append è più sicuro)
         updated_subs = current_subs + new_subs
         
         # Aggiorna lo stato
         st.session_state[self.CONTEXT_KEY].update({
-            "last_substitutions": updated_subs,  # <--- ORA ACCUMULA!
-            "last_request": request,             # (Questo sovrascrive l'ultima richiesta, va bene)
+            "all_substitutions": updated_subs,
+            "last_request": request,
             "last_calculation_time": datetime.now()
         })
 
-    def get_last_substitutions(self) -> List[Dict[str, Any]]:
+    def get_all_substitutions(self) -> List[Dict[str, Any]]:
         """
         Recupera le ultime sostituzioni calcolate
         
         Returns:
             Lista di dizionari con le sostituzioni
         """
-        return st.session_state[self.CONTEXT_KEY].get("last_substitutions", [])
+        return st.session_state[self.CONTEXT_KEY].get("all_substitutions", [])
     
     def has_substitutions(self) -> bool:
         """
@@ -117,7 +117,7 @@ class ConversationMemoryManager:
         Returns:
             True se ci sono sostituzioni salvate
         """
-        return len(self.get_last_substitutions()) > 0
+        return len(self.get_all_substitutions()) > 0
     
     def get_substitutions_summary(self) -> str:
         """
@@ -126,7 +126,7 @@ class ConversationMemoryManager:
         Returns:
             Stringa formattata con il summary
         """
-        subs = self.get_last_substitutions()
+        subs = self.get_all_substitutions()
         if not subs:
             return "Nessuna sostituzione calcolata in precedenza."
         
@@ -143,64 +143,25 @@ class ConversationMemoryManager:
         
         return summary
     
-    def get_substitutions_json(self) -> str:
-        """
-        Restituisce le sostituzioni come JSON string
-        
-        Returns:
-            JSON string delle sostituzioni
-        """
-        return json.dumps(self.get_last_substitutions(), ensure_ascii=False, indent=2)
     
     def clear_all(self):
         """Reset completo: memory conversazionale + context applicativo"""
         st.session_state[self.MEMORY_KEY] = Memory()
         st.session_state[self.CONTEXT_KEY] = {
-            "last_substitutions": [],
+            "all_substitutions": [],
             "last_request": "",
             "last_calculation_time": None
         }
-    
-    def clear_context_only(self):
-        """Reset solo del context applicativo (mantiene conversazione)"""
-        st.session_state[self.CONTEXT_KEY] = {
-            "last_substitutions": [],
-            "last_request": "",
-            "last_calculation_time": None
-        }
-    
-    def export_memory(self) -> str:
-        """
-        Esporta la memoria conversazionale come JSON
-        
-        Returns:
-            JSON string serializzato della Memory
-        """
-        memory = self.get_memory()
-        return memory.json_dumps()
-    
-    def import_memory(self, json_str: str):
-        """
-        Importa una memoria conversazionale da JSON
-        
-        Args:
-            json_str: JSON string da deserializzare
-        """
-        memory = Memory.json_loads(json_str)
-        st.session_state[self.MEMORY_KEY] = memory
     
     def get_conversation_length(self) -> int:
         """
         Restituisce il numero di turni nella conversazione
-        
-        Returns:
-            Numero di turni (user + assistant messages)
         """
         memory = self.get_memory()
-        # Memory ha un attributo turns (lista di Turn objects)
         try:
-            if hasattr(memory, 'turns'):
-                return len(memory.turns)
+            if hasattr(memory, 'to_dict'):
+                data = memory.to_dict()
+                return len(data)
             else:
                 return 0
         except:

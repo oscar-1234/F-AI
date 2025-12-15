@@ -37,7 +37,7 @@ def create_code_generator_agent(api_key: str, model: str = "gpt-4o") -> Agent:
         client=client,
         tools=[execute_code_in_sandbox],
         system_prompt=formatted_system_prompt,
-        max_steps=10,
+        max_steps=4,
         terminate_on_text=True
     )
     

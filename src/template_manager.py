@@ -7,13 +7,7 @@ from pathlib import Path
 from typing import Dict, Any
 from pydantic import BaseModel, Field, ValidationError
 from src.config import TEMPLATES_FILE
-
-class Template(BaseModel):
-    """Model to validate a single template"""
-    nome: str
-    descrizione: str = ""
-    struttura: str = Field(..., min_length=10)
-    regole: str = Field(..., min_length=10)
+from src.models import Template
 
 class TemplateManager:
     """Manages loading and access to templates"""
@@ -80,13 +74,7 @@ class TemplateManager:
         if nome not in self._templates:
             raise KeyError(f"Template '{nome}' non trovato. Disponibili: {list(self._templates.keys())}")
         return self._templates[nome].copy()
-    
-    def list_names(self) -> list:
-        """Restituisce la lista dei nomi dei template disponibili"""
-        return list(self._templates.keys())
-
-# Global initialization
-#TEMPLATES_FILE = Path(__file__).parent / "templates" / "default_templates.yaml"
+        
 
 try:
     _manager = TemplateManager(TEMPLATES_FILE)

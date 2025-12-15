@@ -10,10 +10,8 @@ import traceback
 from pathlib import Path
 
 # Import assoluto invece di relativo
-from src.config import E2B_API_KEY
+from src.config import E2B_API_KEY, DATA_DIR
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "app" / "data"
 
 @tool
 def execute_code_in_sandbox(
@@ -32,7 +30,7 @@ def execute_code_in_sandbox(
             return json.dumps({"success": False, "error": "Nessun file Excel trovato in app/data."})
         
         real_file_path = excel_files[0]
-        remote_filename = "orario_elfi.xlsx"
+        remote_filename = "orario_input.xlsx"
         
         os.environ["E2B_API_KEY"] = E2B_API_KEY
         

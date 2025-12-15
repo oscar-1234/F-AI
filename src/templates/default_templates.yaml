@@ -19,7 +19,7 @@ templates:
       - 'Carb' = gestisce regali bimbi cattivi (non disponibile)
       - 'ABS - XX' = elfo assente dal reparto XX
       - 'SUB - XX' = elfo sostituisce nel reparto XX
-      - Cella vuota tra due celle assegnate = 'Pausa Cioccolata' (richiamabile) (le celle assegnate
+      - Cella vuota tra due celle assegnate = 'Pausa pizza' (richiamabile) (le celle assegnate
       non possono essere ' ', 'Jolly', 'RM', 'Carb' e 'ABS - XX')
     
     regole: |
@@ -34,8 +34,8 @@ templates:
       Esempio: Se Scintillino è assente ('ABS - PE') alla 4^ ora e Brillastella ha 'Jolly'
       nella 4^ ora, allora Brillastella sostituisce ('SUB - PE').
       
-      REGOLA 'Ora Pausa Cioccolata': Gli elfi in 'Pausa Cioccolata' possono essere chiamati
-      Una 'Pausa Cioccolata' è un'ora vuota tra due ore assegnate (le ore assegnate
+      REGOLA 'Ora Pausa pizza': Gli elfi in 'Pausa pizza' possono essere chiamati
+      Una 'Pausa pizza' è un'ora vuota tra due ore assegnate (le ore assegnate
       NON possono essere ' ', 'Jolly', 'RM', 'Carb' e 'ABS - XX').
       Esempio Ok: Se Lampogio è assente ('ABS - CM') alla 3^ ora e Fulgor ha la 2^ ora
       assegnata a 'RG' e la 4^ ora assegnata a 'LC' (quindi 3^ ora vuota), Fulgor può
@@ -47,7 +47,7 @@ templates:
       **PRIORITÀ APPLICAZIONE REGOLE**: cerca soluzioni applicando le regole in questo ordine
         1) Prima Regola 'Assistente asseganto a stesso reparto'
         2) Regola 'Ora Jolly'
-        3) Regola 'Ora Pausa Cioccolata'.
+        3) Regola 'Ora Pausa pizza'.
 
       hints_analisi:
         - pattern_colonne: "Identifica le colonne turni cercando pattern come 'LUN_', 'MAR_' nell'header"
