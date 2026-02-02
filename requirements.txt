@@ -1,11 +1,11 @@
 datapizza-ai==0.0.9
-openai==2.14.0
+openai==2.15.0
 # IMPORTANTE: Blocchiamo la versione alla 1.x per stabilità e compatibilità
 e2b-code-interpreter==2.4.1
-pandas==2.3.3
+pandas==3.0.0
 openpyxl==3.1.5
 pyyaml==6.0.3
-streamlit==1.52.2
+streamlit==1.53.1
 python-dotenv==1.2.1
 pydantic==2.12.5
 # Fix SSL per Windows (fondamentale per alcuni ambienti corporate/locali)
